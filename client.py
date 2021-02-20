@@ -1,31 +1,33 @@
-# almog shoob
-# omer tubul
-
+# Almog Shoob
+# Omer Tubul
 
 import socket
 
 
 def start(my_socket):
-    #  run 1 round of the game
-    while True:  # until msg=='done'
+    """ run 1 round of the game """
+    while True:  # until msg[1]== '2'
         msg = my_socket.recv(1024).decode()  # get msg
-        if msg == 'done':  # check if game is over
+        if msg[1] == '2':  # check if game is over
             return
-        print(msg)  # print msg
-        if 'choose' in msg.lower():  # let client answer if needed
+        print(msg[3:])  # print msg
+        if msg[1] == '0':  # let client answer if needed
             msg = get_input(['1', '2', '3', '4', 'help'])  # get input from client
             my_socket.send(msg.encode())  # send answer to server
 
 
 def get_input(valid_inputs_list):
-    # get list of valid user inputs
-    # return valid input from the user
+    """ @params: 
+        valid_inputs_list - list of valid inputs
+    @ret val: 
+        valid input from the user in lower case
+    """
     options = '/'.join(valid_inputs_list)  # to print later
     while True:  # until user input is valid
         msg = input()  # get input
         if msg.lower() in valid_inputs_list:  # check validity
-            return msg  # if valid, return
-        print('Not valid entry, please enter: ' + options)  # if not valid, ask again
+            return msg.lower()  # if valid, return
+        print(msg + ' is not a valid entry, please enter: ' + options)  # if not valid, ask again
 
 
 def main():
@@ -34,36 +36,35 @@ def main():
 
     print('Hi! Do you want to play? (yes/no): ')  # ask before making contact with the server
     answer = get_input(['yes', 'no'])
-    if answer.lower() == 'no':
+    if answer == 'no':
         print('Bye!')
         return
-    if answer.lower() == 'yes':
-        my_socket.connect((HOST, PORT))  # connect with the server
-        msg = my_socket.recv(1024).decode()  # msg if access approved or not
-        print(msg + '\n')
-        if msg == "OK let's play":  # approved
+    if answer == 'yes':
+        my_socket.connect((HOST, PORT))  # connect with server
+        msg = my_socket.recv(1024).decode()  # server's response
+        print(msg[3:] + '\n')
+        if msg[1] == '0':  # approved
             start(my_socket)  # start game
             print('\n')
         else:  # denied, game manager is full
             return
 
-    # after 1 game, stay connected while the client wants to keep playing
+    # when game finishs, do not disconnect if client wish to keep playing
     while True:  # until answer=='no'
-        print('Do you want to play again? (yes/no): ')  # ask
+        print('Do you want to play again? (yes/no): ')
         answer = get_input(['yes', 'no'])
-        my_socket.send(answer.lower().encode())  # send the server my answer
-        if answer.lower() == 'no':  # exit
+        my_socket.send(answer.encode())  # send answer to server
+        if answer == 'no':  # exit
             print('Bye!')
-            my_socket.close()
             return
-        if answer.lower() == 'yes':  # start another round
+        if answer == 'yes':  # start another round
             start(my_socket)
             print('\n')
 
 
 # general code start here
 HOST = '127.0.0.1'  # The server's IP address
-PORT = 65432  # The port used by the server
+PORT = 65430  # The port used by the server
 
 if __name__ == "__main__":
     main()
